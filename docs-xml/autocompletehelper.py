@@ -109,6 +109,18 @@ def getSectionfromAnchor(anchorAttrib):
             if (anchor.attrib['id'] == anchorAttrib):
                 return section
 
+def getValListFromSectionPath(section, path, listItemsPath):
+    pathList = section.xpath(path)
+    optionStr = ""
+    for plist in pathList:
+        if (plist == None):
+            continue
+        itemList = plist.xpath(listItemsPath)
+        for item in itemList:
+            optionStr = optionStr + ' ' + item.text.split(' ')[0]
+        break
+    return optionStr
+'''
 def getValListFromSectionPath(section, *pathList):
     nextPath = None
     itemList = []
@@ -125,12 +137,13 @@ def getValListFromSectionPath(section, *pathList):
     for data in pathList:
         print(data)
         itemList.append(data)
-
+'''
 def get_socketoptions():
-    return None
 #you need to read smb.conf file to update data
-#    section = getSectionfromAnchor('SOCKETOPTIONS')
-#    getValListFromSectionPath(section,'./variablelist/varlistentry/listitem/itemizedlist', './listitem/para')
+    section = getSectionfromAnchor('SOCKETOPTIONS')
+    sockOption = getValListFromSectionPath(section,'./variablelist/varlistentry/listitem/itemizedlist', './listitem/para')
+    return f"_comp_compgen -- -W \'{sockOption}\'"
+
 
 
 get_socketoptions()
@@ -255,28 +268,8 @@ def getValListFromAnchor( anchorAttrib):
             if (anchor.attrib['id'] == anchorAttrib):
                 return getValList(section)
 
-def getValListFromSectionPath(section, **path):
-    valList = []
-    tagStack = []
-    tagList = pathSplit(path)
-    variableList = section.xpath('./variablelist')
-    tagStack.append(variableList)
 
-    #to understand this loop go though smb.conf.xml tags
-    #varlistentry/listitem/itemizedlist/listitem/para
-    for tag in tagList:
-        for var in variableList:
-            subList = var.xpath('./'+ tag)
-            if ((subList != None) or (subList != '')):
-                tagStack.append(var)
-                variableList = subList
-                    #print( subList[0].tag)
-            else:
-                #else you need to pop an element from stack and traverse each element
-                print('append is not done')
-                continue
-#    for tegs in tagStack:
-#        print(tegs[0].tag)
+    
 
 def getSectionfromAnchor(anchorAttrib):
     sectionLists = root.xpath('//section')

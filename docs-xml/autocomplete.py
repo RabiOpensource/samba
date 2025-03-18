@@ -148,7 +148,8 @@ for subcmd in subcommands:
 autoCompletionCode += f'        '
 for noargcmd in subNoArgCommands:
     autoCompletionCode += f'{noargcmd}'
-    autoCompletionCode += f' | '
+    if (noargcmd != subNoArgCommands[-1]):
+        autoCompletionCode += f' | '
 
 if subNoArgCommands:
     autoCompletionCode += f')\n'
