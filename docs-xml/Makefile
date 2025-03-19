@@ -8,9 +8,19 @@ include Makefile.settings
 
 export XML_CATALOG_FILES := $(XML_CATALOG_FILES) /etc/xml/catalog  $(shell pwd)/build/catalog.xml
 
+FILTER_FILE = $(wildcard $(DOCBOOKDIR)/$(MANPAGEDIR)/smbspool.?.xml \
+	      $(DOCBOOKDIR)/$(MANPAGEDIR)/smb.conf.?.xml \
+	      $(DOCBOOKDIR)/$(MANPAGEDIR)/smbspool_krb5_wrapper.?.xml) #working code
+
 # Docs to build
 MAIN_DOCS = $(patsubst %/index.xml,%,$(wildcard */index.xml))
 MANPAGES = $(sort $(wildcard $(MANPAGEDIR)/*.?.xml))
+
+
+AUTOCOMPLETEFILE =  $(filter-out $(FILTER_FILE), $(wildcard $(DOCBOOKDIR)/$(MANPAGEDIR)/smb*.?.xml), ) #working code
+AUTOCOMPLETE = $(filter-out $(FILTER_FILE),$(wildcard $(DOCBOOKDIR)/$(MANPAGEDIR)/smb*.?.xml))
+
+
 
 # Lists of files to process
 DBLATEX_OPTIONS = -p xslt/latex.xsl -i xslt/latex
@@ -40,13 +50,14 @@ help:
 	@echo " html - Build multi-file HTML versions"
 	@echo " html-single - Build single-file HTML versions"
 	@echo " htmlman - Build HTML version of manpages"
+	@echo " autocomplete - Build auto complete script for samba"
 
 $(PDFDIR)/Samba3-Developers-Guide.pdf $(PSDIR)/Samba3-Developers-Guide.ps $(DOCBOOKDIR)/Samba3-Developers-Guide.xml Samba3-Developers-Guide.tex: $(wildcard Samba3-Developers-Guide/*.xml) Samba3-Developers-Guide-attributions.xml
 
 # Pseudo targets 
 all:: $(TARGETS)
-everything:: manpages pdf html-single html htmlman ps fo htmlhelp
-release:: manpages htmlman html pdf
+everything:: manpages pdf html-single html htmlman ps fo htmlhelp autocomplete
+release:: manpages htmlman html pdf autocomplete
 clean::
 	@echo "Cleaning up..." 
 	rm -rf $(OUTPUTDIR)/* $(DOCBOOKDIR)
@@ -58,6 +69,7 @@ clean::
 	rm -f $(SMBDOTCONFDOC)/parameters.*.xml
 	rm -f build/catalog.xml
 	rm -f DTD/samba.build.pathconfig
+	@echo "$(MANPAGES)"
 
 # Output format targets
 pdf:: $(patsubst %,$(PDFDIR)/%.pdf,$(MAIN_DOCS))
@@ -69,24 +81,32 @@ html-single:: $(patsubst %,$(HTMLDIR)/%.html,$(MAIN_DOCS))
 html:: $(patsubst %,$(HTMLDIR)/%/index.html,$(MAIN_DOCS)) $(HTMLDIR)/index.html
 htmlhelp:: $(addprefix $(HTMLHELPDIR)/,$(MAIN_DOCS))
 validate:: $(addsuffix -validate,$(MAIN_DOCS))
-
+autocompletes:: $(patsubst $(DOCBOOKDIR)/$(MANPAGEDIR)/%.xml, $(AUTOCOMPLETEDIR)/%, $(AUTOCOMPLETE))
 test:: validate
 check:: validate
 
-.PHONY: test check validate manpages
+.PHONY: test1 check validate manpages
+
+$(AUTOCOMPLETEDIR)/%: $(DOCBOOKDIR)/$(MANPAGEDIR)/%.xml
+	@echo "Rabi creating direcotry 12121 $(@D) $< "
+	@mkdir -p $(@D)
+	$(AUTOCOMPLETESCRIPT) $@ $<
 
 # Intermediate docbook docs
 #
 $(DOCBOOKDIR)/%.xml: %/index.xml xslt/expand-sambadoc.xsl $(XSLTPROC_DEPS)
+	@echo "rabi creating directory1 .... $(@D)  $*   $<"
 	@echo "Converting Samba-specific tags for $*..."
 	@mkdir -p $(@D)
 	@$(XSLTPROC) --stringparam latex.imagebasedir "$*/"  --stringparam noreference 0  --xinclude --output $@ xslt/expand-sambadoc.xsl $<
 
 $(DOCBOOKDIR)/manpages/%.xml: $(MANPAGEDIR)/%.xml xslt/expand-sambadoc.xsl Makefile.settings $(XSLTPROC_DEPS)
+	@echo "rabi creating directory2 .... $(@D)  $<"
 	@mkdir -p $(@D)
 	$(XSLTPROC) --xinclude --stringparam noreference 0 --output $@ xslt/expand-sambadoc.xsl $<
 
 $(DOCBOOKDIR)/manpages/index.xml: $(MANPAGES) xslt/manpage-summary.xsl $(XSLTPROC_DEPS)
+	@echo "rabi creating directory3 .... $(@D)"
 	@mkdir -p $(@D)
 	echo "<article><variablelist>" > $@
 	$(XSLTPROC) xslt/manpage-summary.xsl $(MANPAGES) >> $@
@@ -94,31 +114,37 @@ $(DOCBOOKDIR)/manpages/index.xml: $(MANPAGES) xslt/manpage-summary.xsl $(XSLTPRO
 
 # HTML docs
 $(HTMLDIR)/index.html: htmldocs.html
+	@echo "rabi creating directory4 .... $(@D)"
 	@mkdir -p $(@D)
 	cp $< $@
 
 $(HTMLDIR)/%/index.html: $(DOCBOOKDIR)/%.xml $(HTMLDIR)/%/samba.css xslt/html-chunk.xsl %-images-html-chunks $(XSLTPROC_DEPS)
+	@echo "rabi creating directory12 .... $(@D)"
 	@mkdir -p $(@D)
 	$(XSLTPROC) --stringparam base.dir "$(HTMLDIR)/$*/" xslt/html-chunk.xsl $<
 
 # Single large HTML files
 $(OUTPUTDIR)/%/samba.css: xslt/html/samba.css $(XSLTPROC_DEPS)
+	@echo "rabi creating directory5 .... $(@D)"
 	@mkdir -p $(@D)
 	cp $< $@
 
 $(patsubst %,$(HTMLDIR)/%.html,$(MAIN_DOCS)): $(HTMLDIR)/%.html: %-images-html-single
 
 $(HTMLDIR)/%.html: $(DOCBOOKDIR)/%.xml $(HTMLDIR)/samba.css xslt/html.xsl $(XSLTPROC_DEPS)
+	@echo "rabi creating directory6 .... $(@D)"
 	$(XSLTPROC) --output $@ xslt/html.xsl $<
 
 # Attributions
 %-attributions.xml: $(XSLTPROC_DEPS)
+	@echo "rabi creating directory7 .... $(@D)"
 	@echo "Generating attributions file $@ from $*/"
 	@cp -f templates/attributions.xml $@
 	@$(XSLTPROC) --xinclude -o $@ xslt/generate-attributions.xsl $*/index.xml 
 
 # Tex files
 %.tex: %/index.xml xslt/latex.xsl
+	@echo "rabi creating directory8 .... $(@D)"
 	@echo "Generating $@..."
 	@mkdir -p $(@D)
 	@$(DBLATEX) $(DBLATEX_OPTIONS) -t tex -o $@ $<
@@ -131,6 +157,7 @@ $(HTMLDIR)/%.html: $(DOCBOOKDIR)/%.xml $(HTMLDIR)/samba.css xslt/html.xsl $(XSLT
 		-o $@ xslt/generate-dependencies.xsl $<
 	@echo "$*-images-latex-eps: \$$(addsuffix .eps, \$$($*-images-latex))" >> $@
 
+	@echo "rabi creating directory9 .... $(@D)"
 	@echo >> $@
 	@echo "\$$(HTMLDIR)/%: $*/%" >> $@
 	@echo "	@mkdir -p \$$(@D)" >> $@
@@ -156,10 +183,12 @@ endif
 
 # Adobe PDF files  
 $(PDFDIR)/%.pdf: %/index.xml $(PDFDIR) xslt/latex.xsl %-images-latex-png %-images-latex-pdf
+	@echo "rabi here it is comming here"
 	$(DBLATEX) $(DBLATEX_OPTIONS) -I $*/images -t pdf -o $@ $<
 
 # PostScript files
 $(PSDIR)/%.ps: %/index.xml $(PSDIR) xslt/latex.xsl %-images-latex-eps
+	@echo "rabi here it is comming here"
 	$(DBLATEX) $(DBLATEX_OPTIONS) -I $*/images -t ps -o $@ $<
 
 %.eps: %.png
@@ -193,7 +222,10 @@ build/DTD/samba.build.pathconfig: generate-pathconf-entities.sh
 $(OUTPUTDIR):
 	test -d $@ || mkdir $@
 
+
+
 $(OUTPUTDIR)/%: $(DOCBOOKDIR)/%.xml xslt/man.xsl
+	@echo "rabi creating directory10 .... $(@D)"
 	@mkdir -p $(@D)
 	$(XSLTPROC) --output $@ xslt/man.xsl $<
 
@@ -201,6 +233,7 @@ $(OUTPUTDIR)/%: $(DOCBOOKDIR)/%.xml xslt/man.xsl
 smb.conf-chunks: $(patsubst $(SMBDOTCONFDOC)/%.xml,$(HTMLDIR)/smb.conf/%.html,$(wildcard $(SMBDOTCONFDOC)/*/*.xml))
 
 $(HTMLDIR)/smb.conf/%.html: $(SMBDOTCONFDOC)/%.xml
+	@echo "rabi creating directory11 .... $(@D)"
 	@mkdir -p $(@D)
 	$(XSLTPROC) --output $@ xslt/smb.conf-html.xsl $<
 
