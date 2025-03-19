@@ -95,56 +95,46 @@ $(AUTOCOMPLETEDIR)/%: $(DOCBOOKDIR)/$(MANPAGEDIR)/%.xml
 # Intermediate docbook docs
 #
 $(DOCBOOKDIR)/%.xml: %/index.xml xslt/expand-sambadoc.xsl $(XSLTPROC_DEPS)
-	@echo "rabi creating directory1 .... $(@D)  $*   $<"
 	@echo "Converting Samba-specific tags for $*..."
 	@mkdir -p $(@D)
 	@$(XSLTPROC) --stringparam latex.imagebasedir "$*/"  --stringparam noreference 0  --xinclude --output $@ xslt/expand-sambadoc.xsl $<
 
 $(DOCBOOKDIR)/manpages/%.xml: $(MANPAGEDIR)/%.xml xslt/expand-sambadoc.xsl Makefile.settings $(XSLTPROC_DEPS)
-	@echo "rabi creating directory2 .... $(@D)  $<"
 	@mkdir -p $(@D)
 	$(XSLTPROC) --xinclude --stringparam noreference 0 --output $@ xslt/expand-sambadoc.xsl $<
 
 $(DOCBOOKDIR)/manpages/index.xml: $(MANPAGES) xslt/manpage-summary.xsl $(XSLTPROC_DEPS)
-	@echo "rabi creating directory3 .... $(@D)"
 	@mkdir -p $(@D)
 	echo "<article><variablelist>" > $@
 	$(XSLTPROC) xslt/manpage-summary.xsl $(MANPAGES) >> $@
-	@echo "</variablelist></article>" >> $@
 
 # HTML docs
 $(HTMLDIR)/index.html: htmldocs.html
-	@echo "rabi creating directory4 .... $(@D)"
 	@mkdir -p $(@D)
 	cp $< $@
 
 $(HTMLDIR)/%/index.html: $(DOCBOOKDIR)/%.xml $(HTMLDIR)/%/samba.css xslt/html-chunk.xsl %-images-html-chunks $(XSLTPROC_DEPS)
-	@echo "rabi creating directory12 .... $(@D)"
 	@mkdir -p $(@D)
 	$(XSLTPROC) --stringparam base.dir "$(HTMLDIR)/$*/" xslt/html-chunk.xsl $<
 
 # Single large HTML files
 $(OUTPUTDIR)/%/samba.css: xslt/html/samba.css $(XSLTPROC_DEPS)
-	@echo "rabi creating directory5 .... $(@D)"
 	@mkdir -p $(@D)
 	cp $< $@
 
 $(patsubst %,$(HTMLDIR)/%.html,$(MAIN_DOCS)): $(HTMLDIR)/%.html: %-images-html-single
 
 $(HTMLDIR)/%.html: $(DOCBOOKDIR)/%.xml $(HTMLDIR)/samba.css xslt/html.xsl $(XSLTPROC_DEPS)
-	@echo "rabi creating directory6 .... $(@D)"
 	$(XSLTPROC) --output $@ xslt/html.xsl $<
 
 # Attributions
 %-attributions.xml: $(XSLTPROC_DEPS)
-	@echo "rabi creating directory7 .... $(@D)"
 	@echo "Generating attributions file $@ from $*/"
 	@cp -f templates/attributions.xml $@
 	@$(XSLTPROC) --xinclude -o $@ xslt/generate-attributions.xsl $*/index.xml 
 
 # Tex files
 %.tex: %/index.xml xslt/latex.xsl
-	@echo "rabi creating directory8 .... $(@D)"
 	@echo "Generating $@..."
 	@mkdir -p $(@D)
 	@$(DBLATEX) $(DBLATEX_OPTIONS) -t tex -o $@ $<
@@ -157,7 +147,6 @@ $(HTMLDIR)/%.html: $(DOCBOOKDIR)/%.xml $(HTMLDIR)/samba.css xslt/html.xsl $(XSLT
 		-o $@ xslt/generate-dependencies.xsl $<
 	@echo "$*-images-latex-eps: \$$(addsuffix .eps, \$$($*-images-latex))" >> $@
 
-	@echo "rabi creating directory9 .... $(@D)"
 	@echo >> $@
 	@echo "\$$(HTMLDIR)/%: $*/%" >> $@
 	@echo "	@mkdir -p \$$(@D)" >> $@
@@ -183,12 +172,10 @@ endif
 
 # Adobe PDF files  
 $(PDFDIR)/%.pdf: %/index.xml $(PDFDIR) xslt/latex.xsl %-images-latex-png %-images-latex-pdf
-	@echo "rabi here it is comming here"
 	$(DBLATEX) $(DBLATEX_OPTIONS) -I $*/images -t pdf -o $@ $<
 
 # PostScript files
 $(PSDIR)/%.ps: %/index.xml $(PSDIR) xslt/latex.xsl %-images-latex-eps
-	@echo "rabi here it is comming here"
 	$(DBLATEX) $(DBLATEX_OPTIONS) -I $*/images -t ps -o $@ $<
 
 %.eps: %.png
@@ -225,7 +212,6 @@ $(OUTPUTDIR):
 
 
 $(OUTPUTDIR)/%: $(DOCBOOKDIR)/%.xml xslt/man.xsl
-	@echo "rabi creating directory10 .... $(@D)"
 	@mkdir -p $(@D)
 	$(XSLTPROC) --output $@ xslt/man.xsl $<
 
@@ -233,7 +219,6 @@ $(OUTPUTDIR)/%: $(DOCBOOKDIR)/%.xml xslt/man.xsl
 smb.conf-chunks: $(patsubst $(SMBDOTCONFDOC)/%.xml,$(HTMLDIR)/smb.conf/%.html,$(wildcard $(SMBDOTCONFDOC)/*/*.xml))
 
 $(HTMLDIR)/smb.conf/%.html: $(SMBDOTCONFDOC)/%.xml
-	@echo "rabi creating directory11 .... $(@D)"
 	@mkdir -p $(@D)
 	$(XSLTPROC) --output $@ xslt/smb.conf-html.xsl $<
 

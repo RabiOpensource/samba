@@ -73,7 +73,7 @@ def createFunction(command, fName):
         return None
 
 def findRootAndTree(xmlFile):
-    if (xmlFile != None):
+    if (xmlFile is not None):
         global tree, root
         tree = etree.parse(xmlFile)
         root = tree.getroot()
@@ -86,6 +86,7 @@ def findRootAndTree(xmlFile):
 #################################################################################
 def usage():
     print( sys.argv[0] + " --output <output directory> <manpages/smbcommand.xml> ")
+    sys.exit(1)
 
 def initAutoCompleteScript():
     if len(sys.argv) != 4:
